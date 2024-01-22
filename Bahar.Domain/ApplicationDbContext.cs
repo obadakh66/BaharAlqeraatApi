@@ -40,63 +40,63 @@ namespace BaharAlqeraat.Domain
                 new QuranReader { Id=10,Name= "قراءة خلف البزار" }
                 );
             builder.Entity<Quran>().HasData(
-                new Quran { Id=1,Name= "رواية قالون بالقصر والإسكان", QuranReaderId =1},
-                new Quran { Id=2,Name= "رواية قالون بالقصر والصلة", QuranReaderId =1},
-                new Quran { Id=3,Name= "رواية قالون بالتوسط والإسكان", QuranReaderId =1},
-                new Quran { Id=4,Name= "رواية قالون بالتوسط والصلة", QuranReaderId =1},
-                new Quran { Id=5,Name= "رواية ورش من طريق الأزرق", QuranReaderId =1},
-                new Quran { Id=6,Name= "رواية ورش من طريق الأصبهاني", QuranReaderId =1},
+                new Quran { Id=1,Name= "نافع رواية قالون بالقصر والإسكان", QuranReaderId =1},
+                new Quran { Id=2,Name= "نافع رواية قالون بالقصر والصلة", QuranReaderId =1},
+                new Quran { Id=3,Name= "نافع رواية قالون بالتوسط والإسكان", QuranReaderId =1},
+                new Quran { Id=4,Name= "نافع رواية قالون بالتوسط والصلة", QuranReaderId =1},
+                new Quran { Id=5,Name= "نافع رواية ورش من طريق الأزرق", QuranReaderId =1},
+                new Quran { Id=6,Name= "نافع رواية ورش من طريق الأصبهاني", QuranReaderId =1},
 
-                new Quran { Id=7,Name= "مصحف قراءة ابن كثير", QuranReaderId =2},
-                new Quran { Id=8,Name= "مصحف رواية البزي", QuranReaderId =2},
-                new Quran { Id=9,Name= "مصحف رواية قنبل", QuranReaderId =2},
-
-
-                new Quran { Id=10,Name= "مصحف قراءة أبي عمرو", QuranReaderId =3},
-                new Quran { Id=11,Name= "رواية الدوري بتوسط المنفصل", QuranReaderId =3},
-                new Quran { Id=12,Name= "رواية الدوري بقصر المنفصل", QuranReaderId =3},
-                new Quran { Id=13,Name= "مصحف رواية السوسي", QuranReaderId =3},
+                new Quran { Id=7,Name= "قراءة ابن كثير", QuranReaderId =2},
+                new Quran { Id=8,Name= "ابن كثير رواية البزي", QuranReaderId =2},
+                new Quran { Id=9,Name= "ابن كثير رواية قنبل", QuranReaderId =2},
 
 
-                new Quran { Id=14,Name= "مصحف قراءة ابن عامر", QuranReaderId =4},
-                new Quran { Id=15,Name= "مصحف رواية هشام", QuranReaderId =4},
-                new Quran { Id=16,Name= "مصحف رواية ابن ذكوان", QuranReaderId =4},
-
-                new Quran { Id=17,Name= "مصحف قراءة عاصم", QuranReaderId =5},
-                new Quran { Id=18,Name= "مصحف رواية شعــبة", QuranReaderId =5},
-                new Quran { Id=19,Name= "رواية حفص بحاشية يمنى", QuranReaderId =5},
-                new Quran { Id=20,Name= "رواية حفص بحاشية سفلى", QuranReaderId =5},
+                new Quran { Id=10,Name= "قراءة أبي عمرو", QuranReaderId =3},
+                new Quran { Id=11,Name= "أبي عمرو رواية الدوري بتوسط المنفصل", QuranReaderId =3},
+                new Quran { Id=12,Name= "أبي عمرو رواية الدوري بقصر المنفصل", QuranReaderId =3},
+                new Quran { Id=13,Name= "أبي عمرو رواية السوسي", QuranReaderId =3},
 
 
-                new Quran { Id=21,Name= "مصحف قراءة حمزة الكوفي", QuranReaderId =6},
-                new Quran { Id=22,Name= "رواية خلف بلا سكت على المفصول", QuranReaderId =6},
-                new Quran { Id=23,Name= "رواية خلف بالسكت على المفصول", QuranReaderId =6},
-                new Quran { Id=24,Name= "رواية خلاد بلا سكت مطلقاً ", QuranReaderId =6},
-                new Quran { Id=25,Name= "رواية خلاد بالسكت المــعروف له", QuranReaderId =6},
+                new Quran { Id=14,Name= "قراءة ابن عامر", QuranReaderId =4},
+                new Quran { Id=15,Name= "ابن عامر رواية هشام", QuranReaderId =4},
+                new Quran { Id=16,Name= "ابن عامر رواية ابن ذكوان", QuranReaderId =4},
+
+                new Quran { Id=17,Name= "قراءة عاصم", QuranReaderId =5},
+                new Quran { Id=18,Name= "عاصم رواية شعــبة", QuranReaderId =5},
+                new Quran { Id=19,Name= "عاصم رواية حفص بحاشية يمنى", QuranReaderId =5},
+                new Quran { Id=20,Name= "عاصم رواية حفص بحاشية سفلى", QuranReaderId =5},
 
 
-                new Quran { Id=26,Name= "قراءة الكسائي/ المذهب الإجمالي", QuranReaderId =7},
-                new Quran { Id=27,Name= "قراءة الكسائي/ المذهب التفصيلي", QuranReaderId =7},
-                new Quran { Id=28,Name= "رواية الليث /المذهب الإجمالي", QuranReaderId =7},
-                new Quran { Id=29,Name= "رواية الليث /المذهب التفصيلي", QuranReaderId =7},
-                new Quran { Id=30,Name= "رواية الدوري /المذهب الإجمالي", QuranReaderId =7},
-                new Quran { Id=31,Name= "رواية الدوري /المذهب التفصيلي", QuranReaderId =7},
+                new Quran { Id=21,Name= "قراءة حمزة الكوفي", QuranReaderId =6},
+                new Quran { Id=22,Name= " حمزة رواية خلف بلا سكت ", QuranReaderId =6},
+                new Quran { Id=23,Name= "حمزة رواية خلف بالسكت ", QuranReaderId =6},
+                new Quran { Id=24,Name= "حمزة رواية خلاد بلا سكت  ", QuranReaderId =6},
+                new Quran { Id=25,Name= "حمزة رواية خلاد بالسكت ", QuranReaderId =6},
 
 
-                new Quran { Id=32,Name= "مصحف قراءة أبي جعفر", QuranReaderId =8},
-                new Quran { Id=33,Name= "مصحف رواية ابن وردان", QuranReaderId =8},
-                new Quran { Id=34,Name= "مصحف رواية ابن جماز", QuranReaderId =8},
+                new Quran { Id=26,Name= "قراءة الكسائي المذهب الإجمالي", QuranReaderId =7},
+                new Quran { Id=27,Name= "قراءة الكسائي المذهب التفصيلي", QuranReaderId =7},
+                new Quran { Id=28,Name= "الكسائي رواية الليث المذهب الإجمالي", QuranReaderId =7},
+                new Quran { Id=29,Name= "الكسائي رواية الليث المذهب التفصيلي", QuranReaderId =7},
+                new Quran { Id=30,Name= "الكسائي رواية الدوري المذهب الإجمالي", QuranReaderId =7},
+                new Quran { Id=31,Name= "الكسائي رواية الدوري المذهب التفصيلي", QuranReaderId =7},
 
 
-                new Quran { Id=35,Name= "مصحف قراءة يعقوب", QuranReaderId =9},
-                new Quran { Id=36,Name= "مصحف رواية رويس", QuranReaderId =9},
-                new Quran { Id=37,Name= "مصحف رواية روح", QuranReaderId =9},
+                new Quran { Id=32,Name= "قراءة أبي جعفر", QuranReaderId =8},
+                new Quran { Id=33,Name= "أبي جعفر رواية ابن وردان", QuranReaderId =8},
+                new Quran { Id=34,Name= "أبي جعفر رواية ابن جماز", QuranReaderId =8},
 
 
-                new Quran { Id=38,Name= "مصحف قراءة خلف العاشر", QuranReaderId =10},
-                new Quran { Id=39,Name= "مصحف رواية إسحاق", QuranReaderId =10},
-                new Quran { Id=40,Name= "مصحف رواية إدريس", QuranReaderId =10},
-                new Quran { Id=41,Name= "رواية إدريس بالسكت العام", QuranReaderId =10}
+                new Quran { Id=35,Name= "قراءة يعقوب", QuranReaderId =9},
+                new Quran { Id=36,Name= "يعقوب رواية رويس", QuranReaderId =9},
+                new Quran { Id=37,Name= "يعقوب رواية روح", QuranReaderId =9},
+
+
+                new Quran { Id=38,Name= "قراءة خلف العاشر", QuranReaderId =10},
+                new Quran { Id=39,Name= "خلف رواية إسحاق", QuranReaderId =10},
+                new Quran { Id=40,Name= "خلف رواية إدريس", QuranReaderId =10},
+                new Quran { Id=41,Name= "خلف إدريس بالسكت العام", QuranReaderId =10}
                
                 );
             builder.Entity<QuranLine>()
