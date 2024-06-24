@@ -16,8 +16,9 @@ namespace Bahar.Service
         byte[] GetQuraanPageFull(int readerId, int quranId, int pageNumber);
         void ConvertQuraanFull(int readerId, int quranId);
         byte[] GetQuraanPageCropped(int readerId, int quranId, int pageNumber);
-        Task<SuraDto> GetSuraAsync(int pageId);
-        Task ScrapeAndDownloadAudioFilesAsync();
+        Task<SuraDto> GetSuraAsync(int pageId,int? suraNumber);
+        Task<List<SuraDto>> GetSurasByPageNumberAsync(int pageNumber);
+        Task<SurasDto> GetPageSurasAsync(int pageId, List<int> suraNumbers);
     }
 }
 

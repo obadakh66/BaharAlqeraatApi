@@ -12,6 +12,8 @@ namespace BaharAlqeraat.Domain
         public virtual DbSet<QuranLine> QuranLines { get; set; }
         public virtual DbSet<QuranReader> Readers { get; set; }
         public virtual DbSet<Quran> Qurans { get; set; }
+        public virtual DbSet<WebScrapeLog> WebScrapeLogs { get; set; }
+        public virtual DbSet<ErrorLog> ErrorLogs { get; set; }
         public ApplicationDbContext()
         {
         }

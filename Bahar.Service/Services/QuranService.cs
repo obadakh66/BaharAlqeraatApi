@@ -19,9 +19,15 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using PuppeteerSharp;
+using Bahar.Domain.Migrations;
 
 namespace Bahar.Service
 {
+    public partial class AyaAduiDto
+    {
+        public int QuranId { get; set; }
+        public IElementHandle Audio { get; set; }
+    }
     public class QuranService : IQuranService
     {
         private readonly ApplicationDbContext _context;
@@ -45,10 +51,10 @@ namespace Bahar.Service
             var reader = await _context.Readers.Include(x => x.Qurans).FirstOrDefaultAsync(x => x.Id == id);
             return reader;
         }
-        public async Task<SuraDto> GetSuraAsync(int pageId)
+        public async Task<SuraDto> GetSuraAsync(int pageId, int? suraNumber)
         {
             var ayat = await _context.QuranLines
-                .Where(x => x.PageNumber == pageId)
+                .Where(x => x.PageNumber == pageId && (!suraNumber.HasValue || x.SuraNumber == suraNumber))
                 .Select(x => new
                 {
                     x.SuraName,
@@ -59,7 +65,7 @@ namespace Bahar.Service
                     x.Id,
                     x.Number
                 })
-                .Distinct()
+                .OrderBy(x => x.SuraNumber)
                 .ToListAsync();
 
             var firstAyah = ayat.FirstOrDefault();
@@ -86,56 +92,68 @@ namespace Bahar.Service
                 PageNumber = x.PageNumber,
                 SuraName = x.SuraName,
                 SuraNumber = x.SuraNumber
-            }).OrderBy(x=>x.Number).ToList();
+            }).OrderBy(x => x.Number).ToList();
 
             return response;
         }
-        public async Task ScrapeAndDownloadAudioFilesAsync()
+        public async Task<SurasDto> GetPageSurasAsync(int pageId, List<int> suraNumbers)
         {
-            try
-            {
-                var url = "https://www.nquran.com/ar/ayacompare/%D9%85%D9%82%D8%A7%D8%B1%D9%86%D8%A9-%D8%A7%D9%84%D8%A2%D9%8A%D8%A7%D8%AA-%D8%A8%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D9%8A%D8%A7%D8%AA?&aya=2&sora=1";
-
-                await new BrowserFetcher().DownloadAsync();
-                using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
-                using var page = await browser.NewPageAsync();
-
-                await page.GoToAsync(url);
-
-                // Wait for the page to load and any potential dynamic content to be rendered
-                await page.WaitForTimeoutAsync(5000);
-
-                // Click the play button
-                await page.ClickAsync(".fa-headphones");
-
-                // Wait for the audio to play (you may need to adjust this duration)
-                await page.WaitForTimeoutAsync(5000);
-
-                // Extract the URL of the audio being played
-                var audioUrl = await page.EvaluateFunctionAsync<string>(
-                    @"() => document.querySelector('audio').src"
-                );
-
-                if (!string.IsNullOrEmpty(audioUrl))
+            var ayat = await _context.QuranLines
+                .Where(x => x.PageNumber == pageId && (suraNumbers.Count > 0 || suraNumbers.Any(s => s == x.SuraNumber)))
+                .Select(x => new
                 {
-                    var httpClient = new System.Net.Http.HttpClient();
-                    var audioBytes = await httpClient.GetByteArrayAsync(audioUrl);
-
-                    // Save the audio file
-                    var fileName = System.IO.Path.GetFileName(audioUrl);
-                    File.WriteAllBytes(fileName, audioBytes);
-                    Console.WriteLine($"Downloaded: {fileName}");
-                }
-                else
+                    x.SuraName,
+                    x.SuraNumber,
+                    x.PageNumber,
+                    x.Content,
+                    x.ContentSimple,
+                    x.Id,
+                    x.Number
+                })
+                .ToListAsync();
+            var groupedAyat = ayat
+                .GroupBy(x => x.SuraNumber)
+                .Select(g => new SuraDto
                 {
-                    Console.WriteLine("Failed to extract audio URL.");
-                }
-            }
-            catch (Exception ex)
+                    PageNumber = pageId,  // Assuming you want to use the pageId from the query parameter
+                    SuraNumber = g.Key,
+                    SuraName = g.First().SuraName,
+                    Ayat = g.Select(a => new AyahDto        
+                    {
+                        Id = a.Id,
+                        Number = a.Number,
+                        Content = a.Content,
+                        ContentSimple = a.ContentSimple
+                    }).ToList()
+                })
+                .OrderBy(x => x.SuraNumber)
+                .ToList();
+
+            var surasDto = new SurasDto
             {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
+                PageNumber = pageId,
+                Suras = groupedAyat
+            };
+            return surasDto;
         }
+
+        public async Task<List<SuraDto>> GetSurasByPageNumberAsync(int pageNumber)
+        {
+            var suras = await _context.QuranLines
+                .Where(x => x.PageNumber == pageNumber)
+                .Select(x => new SuraDto
+                {
+                    SuraName = x.SuraName,
+                    PageNumber = pageNumber,
+                    SuraNumber = x.SuraNumber
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return suras;
+        }
+
+
         public async Task<QuranLineResponse> SearchQuran(string searchValue, int pageSize, int pageNumber)
         {
             var readers = _context.QuranLines.Where(x => x.ContentSimple.Contains(searchValue));

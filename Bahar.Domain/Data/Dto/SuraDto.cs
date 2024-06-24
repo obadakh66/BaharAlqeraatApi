@@ -11,6 +11,13 @@ namespace BaharAlqeraat.Domain.Data.Dtos
         public string SuraName { get; set; }
         public List<AyahDto> Ayat { get; set; }
     }
+    public partial class SurasDto
+    {
+        public int PageNumber { get; set; }
+        public List<SuraDto> Suras { get; set; }
+    }
+   
+    
     public partial class AyahDto
     {
         public int Id { get; set; }
@@ -20,5 +27,6 @@ namespace BaharAlqeraat.Domain.Data.Dtos
         public string SuraName { get; set; }
         public string Content { get; set; }
         public string ContentSimple { get; set; }
+        public bool IsSelected { get; set; } = false;
     }
 }

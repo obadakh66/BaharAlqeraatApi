@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BunnyCDN.Net.Storage" Version="1.0.4" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
     <PackageReference Include="iText7" Version="7.1.16" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

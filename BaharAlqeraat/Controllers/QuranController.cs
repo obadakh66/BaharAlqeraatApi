@@ -1,11 +1,20 @@
-﻿using Bahar.Service;
+﻿using Bahar.Domain.Data.Dto;
+using Bahar.Service;
+using BaharAlqeraat.Domain.Data.Dtos;
+using BaharAlqeraat.Domain.Data.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace BaharAlqeraat.Controllers
 {
+  
     [ApiController]
     [Route("api/[controller]/[action]")]
     public class QuranController : ControllerBase
@@ -13,11 +22,23 @@ namespace BaharAlqeraat.Controllers
 
         private readonly ILogger<QuranController> _logger;
         private IQuranService _QuranService;
+        private IAudioScrapingService _AudioScrapingService;
+        private readonly IWebHostEnvironment _env;
+        private readonly AppSettings _appSettings;
 
-        public QuranController(ILogger<QuranController> logger, IQuranService QuranService)
+        public QuranController(ILogger<QuranController> logger, IQuranService QuranService, 
+            IWebHostEnvironment env, IAudioScrapingService AudioScrapingService, IOptions<AppSettings> appSettings)
         {
             _logger = logger;
             _QuranService = QuranService;
+            _env = env;
+            _AudioScrapingService = AudioScrapingService;
+            _appSettings = appSettings.Value;
+        }
+        [HttpGet]
+        public IActionResult GetAppSettings()
+        {
+            return Ok(_appSettings);
         }
 
         [HttpGet("{searchValue}/{pageSize}/{pageNumber}")]
@@ -46,12 +67,12 @@ namespace BaharAlqeraat.Controllers
                 throw;
             }
         }
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetSura(int id)
+        [HttpGet("{id}/{suraNumber?}")]
+        public async Task<IActionResult> GetSura(int id, int? suraNumber=null)
         {
             try
             {
-                var response = await _QuranService.GetSuraAsync(id);
+                var response = await _QuranService.GetSuraAsync(id,suraNumber);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -59,13 +80,61 @@ namespace BaharAlqeraat.Controllers
                 throw;
             }
         }
-        [HttpGet]
-        public async Task<IActionResult> FetchMedia()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPageSuras(int id, [FromQuery]List<int> suraNumbers)
         {
             try
             {
-                await _QuranService.ScrapeAndDownloadAudioFilesAsync();
-                return Ok();
+                var response = await _QuranService.GetPageSurasAsync(id,suraNumbers);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        [HttpPost("DownloadAudio")]
+        public async Task<IActionResult> DownloadAudio([FromForm] AudioDownloadRequest request)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                try
+                {
+                    var pathToSave = Path.Combine(_env.WebRootPath, "media", request.QuranId.ToString(), request.Surah.ToString());
+                    if (!Directory.Exists(pathToSave))
+                    {
+                        Directory.CreateDirectory(pathToSave);
+                    }
+
+                    var fileName = $"{request.Ayah}.mp3";
+                    var filePath = Path.Combine(pathToSave, fileName);
+                    var isSaved = true;
+
+                    if (!System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.WriteAllBytes(filePath, request.AudioBytes);
+                        await _AudioScrapingService.LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, isSaved);
+                        return Ok($"Downloaded and saved: {fileName}");
+                    }
+                    isSaved= false;
+                    await _AudioScrapingService.LogError(request.Ayah, request.QuranId, request.Surah, $"File already exists: {fileName}");
+                    return BadRequest($"File already exists: {fileName}");
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"Error downloading or saving file: {ex.Message}");
+                }
+            }
+        }
+    
+
+    [HttpGet("{id}")]
+        public async Task<IActionResult> GetSurasByPageNumber(int id)
+        {
+            try
+            {
+                var response = await _QuranService.GetSurasByPageNumberAsync(id);
+                return Ok(response);
             }
             catch (Exception ex)
             {

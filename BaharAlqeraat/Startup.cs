@@ -1,3 +1,4 @@
+using Bahar.Domain.Data.Dto;
 using Bahar.Service;
 using BaharAlqeraat.Domain;
 using Microsoft.AspNetCore.Builder;
@@ -36,8 +37,12 @@ namespace BaharAlqeraat
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BaharAlqeraat", Version = "v1" });
             });
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IQuranService, QuranService>();
+            services.AddScoped<IAudioScrapingService, AudioScrapingService>();
+            services.AddSingleton<IBackgroundServiceStatus, BackgroundServiceStatus>();
+            services.AddHostedService<AudioScrapingBackgroundService>();
 
         }
 
