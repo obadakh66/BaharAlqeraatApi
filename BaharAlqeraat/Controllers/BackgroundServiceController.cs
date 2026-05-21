@@ -26,11 +26,11 @@ namespace BaharAlqeraat.Controllers
             _backgroundServiceStatus.QuransIds= quransIds;
             return Ok("Background service started.");
         }
-        [HttpPost("start-service")]
-        public async Task StartServiceAsync(List<int> quransIds, int? startingSurah = null, int? startingAyah = null)
-        {
-             await _service.ScrapeAndDownloadAudioFilesAsync(quransIds,startingSurah,startingAyah);
-        }
+        //[HttpPost("start-service")]
+        //public async Task StartServiceAsync(List<int> quransIds, int? startingSurah = null, int? startingAyah = null)
+        //{
+        //     await _service.ScrapeAndDownloadAudioFilesAsync(quransIds,startingSurah,startingAyah);
+        //}
 
         [HttpPost("stop")]
         public IActionResult StopBackgroundService()

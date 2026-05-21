@@ -3,35 +3,42 @@ using BaharAlqeraat.Domain;
 using BaharAlqeraat.Domain.Data.Dtos;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Ocsp;
+using Microsoft.Extensions.Logging;
 using PuppeteerSharp;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class AudioScrapingService : IAudioScrapingService
 {
     private readonly IWebHostEnvironment _env;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<AudioScrapingService> _logger;
     public int ayahId = 0;
     public int surahId = 0;
     public int quranId;
     private IBrowser _browser;
     public List<int> GlobalQuranIds = new List<int> { 19, 4, 5, 6, 8, 9, 12, 13, 15, 16, 18, 22, 24, 28, 30, 33, 34, 36, 37, 39, 40 };
-    public AudioScrapingService(IWebHostEnvironment env, ApplicationDbContext context)
+    public AudioScrapingService(IWebHostEnvironment env, ApplicationDbContext context, ILogger<AudioScrapingService> logger)
     {
         _env = env;
         _context = context;
+        _logger = logger;
     }
 
-    public async Task ScrapeAndDownloadAudioFilesAsync(List<int> quransIds, int? startingSurah = null, int? startingAyah = null)
+    public async Task ScrapeAndDownloadAudioFilesAsync(List<int> quransIds, CancellationToken cancellationToken, int? startingSurah = null, int? startingAyah = null)
     {
+        IBrowser browser = null;
         try
         {
             int startSurah;
             int startAyah;
+
             if (startingSurah.HasValue)
                 startSurah = startingSurah.Value;
             else
@@ -42,12 +49,8 @@ public class AudioScrapingService : IAudioScrapingService
 
                 startSurah = latestLog?.SurahId ?? 1;
             }
-            if (startingAyah.HasValue)
-                startAyah = startingAyah.Value;
-            else
-            {
-                startAyah = 1;
-            }
+
+            startAyah = startingAyah ?? 1;
 
             var quranSurahNumbers = await _context.QuranLines
                 .Where(x => x.SuraNumber >= startSurah)
@@ -56,8 +59,14 @@ public class AudioScrapingService : IAudioScrapingService
                 .OrderBy(x => x)
                 .ToListAsync();
 
+            var browserFetcher = new BrowserFetcher();
+            await browserFetcher.DownloadAsync();
+            browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+            Log.Information("Browser initialized");
+
             foreach (var surah in quranSurahNumbers)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 surahId = surah;
 
                 var surahAyat = await _context.QuranLines
@@ -66,241 +75,133 @@ public class AudioScrapingService : IAudioScrapingService
                     .OrderBy(x => x)
                     .Distinct()
                     .ToListAsync();
+
                 foreach (var ayah in surahAyat)
                 {
-                    quransIds = new List<int>();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var ayahId = ayah;
+
                     foreach (var gQuranId in GlobalQuranIds)
                     {
-                        var pathToSave = Path.Combine(_env.WebRootPath, "media", gQuranId.ToString(), surah.ToString());
-                        if (!Directory.Exists(pathToSave))
-                        {
-                            Directory.CreateDirectory(pathToSave);
-                        }
-
-                        var fileName = $"{ayah}.mp3";
-                        var filePath = Path.Combine(pathToSave, fileName);
-
-                        if (!System.IO.File.Exists(filePath))
-                        {
-                            if (!quransIds.Contains(gQuranId))
-                            {
-                                quransIds.Add(gQuranId);
-                            }
-                        }
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await PerformTaskAsync(gQuranId, surah, ayah, browser, cancellationToken);
                     }
-                    ayahId = ayah;
-                    var scrabeLog = await _context.WebScrapeLogs.Where(x => x.SurahId == surah && x.AyahId == ayah && x.IsSavedBefore).OrderByDescending(x => x.CreationDate).FirstOrDefaultAsync();
-                    if (quransIds.Count > 0)
-                    {
-                        var url = "https://www.nquran.com/ar/ayacompare?aya=" + ayah + "&sora=" + surah;
-                        await new BrowserFetcher().DownloadAsync();
-
-                        using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
-                        using var page = await browser.NewPageAsync();
-
-                        await page.GoToAsync(url);
-
-                        // Wait for the page to load and any potential dynamic content to be rendered
-                        await page.WaitForTimeoutAsync(5000);
-
-                        // Get all elements with the class ".fa-headphones"
-                        var audioElements = await page.QuerySelectorAllAsync(".fa-headphones");
-                        var qurans = await _context.Qurans.ToListAsync();
-                        var audioToSaveList = new List<AyaAduiDto>();
-                        int index = -1;
-                        if (quransIds.Count > 0)
-                        {
-                            foreach (var id in quransIds)
-                            {
-                                switch (id)
-                                {
-                                    case 19:
-                                        index = 0;
-                                        break;
-                                    case 4:
-                                        index = 1;
-                                        break;
-                                    case 5:
-                                        index = 2;
-                                        break;
-                                    case 6:
-                                        index = 3;
-                                        break;
-                                    case 8:
-                                        index = 4;
-                                        break;
-                                    case 9:
-                                        index = 5;
-                                        break;
-                                    case 12:
-                                        index = 6;
-                                        break;
-                                    case 13:
-                                        index = 7;
-                                        break;
-                                    case 15:
-                                        index = 8;
-                                        break;
-                                    case 16:
-                                        index = 9;
-                                        break;
-                                    case 18:
-                                        index = 10;
-                                        break;
-                                    case 22:
-                                        index = 11;
-                                        break;
-                                    case 24:
-                                        index = 12;
-                                        break;
-                                    case 28:
-                                        index = 13;
-                                        break;
-                                    case 30:
-                                        index = 14;
-                                        break;
-                                    case 33:
-                                        index = 15;
-                                        break;
-                                    case 34:
-                                        index = 16;
-                                        break;
-                                    case 36:
-                                        index = 17;
-                                        break;
-                                    case 37:
-                                        index = 18;
-                                        break;
-                                    case 39:
-                                        index = 19;
-                                        break;
-                                    case 40:
-                                        index = 20;
-                                        break;
-                                    default:
-                                        // Handle the case where the QuranId is not found
-                                        break;
-                                }
-                                audioToSaveList.Add(new AyaAduiDto
-                                {
-                                    QuranId = id,
-                                    Audio = audioElements[index]
-                                });
-                            }
-                        }
-                        else
-                        {
-                            audioToSaveList = new List<AyaAduiDto>
-                                    {
-                                        new AyaAduiDto { Audio= audioElements[0], QuranId=19 },
-                                        new AyaAduiDto { Audio= audioElements[1], QuranId=4 },
-                                        new AyaAduiDto { Audio= audioElements[2], QuranId=5 },
-                                        new AyaAduiDto { Audio= audioElements[3], QuranId=6 },
-                                        new AyaAduiDto { Audio= audioElements[4], QuranId=8 },
-                                        new AyaAduiDto { Audio= audioElements[5], QuranId=9 },
-                                        new AyaAduiDto { Audio= audioElements[6], QuranId=12 },
-                                        new AyaAduiDto { Audio= audioElements[7], QuranId=13 },
-                                        new AyaAduiDto { Audio= audioElements[8], QuranId=15 },
-                                        new AyaAduiDto { Audio= audioElements[9], QuranId=16 },
-                                        new AyaAduiDto { Audio= audioElements[10], QuranId=18 },
-                                        new AyaAduiDto { Audio= audioElements[11], QuranId=22 },
-                                        new AyaAduiDto { Audio= audioElements[12], QuranId=24 },
-                                        new AyaAduiDto { Audio= audioElements[13], QuranId=28 },
-                                        new AyaAduiDto { Audio= audioElements[14], QuranId=30 },
-                                        new AyaAduiDto { Audio= audioElements[15], QuranId=33 },
-                                        new AyaAduiDto { Audio= audioElements[16], QuranId=34 },
-                                        new AyaAduiDto { Audio= audioElements[17], QuranId=36 },
-                                        new AyaAduiDto { Audio= audioElements[18], QuranId=37 },
-                                        new AyaAduiDto { Audio= audioElements[19], QuranId=39 },
-                                        new AyaAduiDto { Audio= audioElements[20], QuranId=40 }
-
-                                    };
-                        }
-
-                        // Click each ".fa-headphones" element
-
-                        foreach (var audioelement in audioToSaveList)
-                        {
-                            await audioelement.Audio.ClickAsync();
-                            var startTime = DateTime.Now;
-                            var audioPlaying = false;
-                            quranId = audioelement.QuranId;
-                            while ((DateTime.Now - startTime).TotalMilliseconds < 30000)  // Adjust the maximum waiting time as needed
-                            {
-                                // Check if the audio is playing by evaluating a condition
-                                audioPlaying = await page.EvaluateFunctionAsync<bool>(
-                                    @"() => document.querySelector('audio').paused === false"
-                                );
-
-                                if (audioPlaying)
-                                {
-                                    // Audio has started playing, break out of the loop
-                                    break;
-                                }
-
-                                // Sleep for a short duration before checking again
-                                await page.WaitForTimeoutAsync(5000);  // Adjust the interval as needed
-                            }
-                            if (audioPlaying)
-                            {
-                                try
-                                {
-                                    await page.WaitForTimeoutAsync(5000);
-                                    // Extract the URL of the audio being played
-                                    var audioUrl = await page.EvaluateFunctionAsync<string>(
-                                        @"() => document.querySelector('audio').src"
-                                    );
-
-                                    if (!string.IsNullOrEmpty(audioUrl))
-                                    {
-
-                                        await audioelement.Audio.ClickAsync();
-                                        var httpClient = new System.Net.Http.HttpClient();
-                                        var audioBytes = await httpClient.GetByteArrayAsync(audioUrl);
-                                        AudioDownloadRequest audioDownloadRequest = new AudioDownloadRequest
-                                        {
-                                            AudioBytes = audioBytes,
-                                            Ayah = ayah,
-                                            QuranId = audioelement.QuranId,
-                                            Surah = surah
-                                        };
-                                        await CallDownloadApi(audioDownloadRequest);
-                                    }
-
-                                    else
-                                    {
-                                        await LogError(ayah, audioelement.QuranId, surah, "Failed to fetch audio url.");
-                                        Console.WriteLine($"Failed to extract audio URL. surah: {surah}, ayah: {ayah}");
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    Console.WriteLine($"Failed to start playing audio. surah: {surah}, ayah: {ayah} because {e.Message}");
-                                    await LogError(ayah, audioelement.QuranId, surah, e.Message);
-                                }
-                            }
-                            else
-                            {
-                                await LogError(ayah, audioelement.QuranId, surah, "Failed to start playing audio.");
-                                Console.WriteLine($"Failed to start playing audio. surah: {surah}, ayah: {ayah}");
-                            }
-                        }
-                    }
-
-
                 }
             }
         }
+        catch (OperationCanceledException)
+        {
+            Log.Information("Operation was cancelled.");
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"------------ exception happened -----------------");
-            await LogError(ayahId, quranId, surahId, ex.Message);
+            Log.Error("ayah :" + ayahId + " surah :" + surahId + " exception : " + ex.Message);
+            await LogError(ayahId, quranId, surahId, ex.Message, cancellationToken);
             throw;
         }
+        finally
+        {
+            if (browser != null)
+            {
+                await browser.CloseAsync();
+                Log.Information("Browser closed.");
+            }
+        }
+    
     }
-    private async Task CallDownloadApi(AudioDownloadRequest request)
+    private async Task PerformTaskAsync(int gQuranId, int surah, int ayah, IBrowser browser, CancellationToken cancellationToken)
     {
+        var pathToSave = Path.Combine(_env.WebRootPath, "media", gQuranId.ToString(), surah.ToString());
+        if (!Directory.Exists(pathToSave))
+        {
+            Directory.CreateDirectory(pathToSave);
+        }
 
+        var fileName = $"{ayah}.mp3";
+        var filePath = Path.Combine(pathToSave, fileName);
+        Log.Information("ayah :" + ayah + " surah :" + surah + " ");
+        if (!System.IO.File.Exists(filePath))
+        {
+            var url = $"https://www.nquran.com/ar/ayacompare?aya={ayah}&sora={surah}";
+
+            using var page = await browser.NewPageAsync();
+            await page.GoToAsync(url);
+            await page.WaitForTimeoutAsync(5000);
+
+            var audioElements = await page.QuerySelectorAllAsync(".fa-headphones");
+            var audioToSaveList = new List<AyaAduiDto>();
+
+            var quranIndexMap = new Dictionary<int, int>
+        {
+            { 19, 0 }, { 4, 1 }, { 5, 2 }, { 6, 3 }, { 8, 4 }, { 9, 5 },
+            { 12, 6 }, { 13, 7 }, { 15, 8 }, { 16, 9 }, { 18, 10 },
+            { 22, 11 }, { 24, 12 }, { 28, 13 }, { 30, 14 }, { 33, 15 },
+            { 34, 16 }, { 36, 17 }, { 37, 18 }, { 39, 19 }, { 40, 20 }
+        };
+
+            if (quranIndexMap.TryGetValue(gQuranId, out var index))
+            {
+                audioToSaveList.Add(new AyaAduiDto
+                {
+                    QuranId = gQuranId,
+                    Audio = audioElements[index]
+                });
+            }
+
+            foreach (var audioElement in audioToSaveList)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await audioElement.Audio.ClickAsync();
+                var audioPlaying = false;
+                var startTime = DateTime.Now;
+
+                while ((DateTime.Now - startTime).TotalMilliseconds < 30000)
+                {
+                    audioPlaying = await page.EvaluateFunctionAsync<bool>("() => document.querySelector('audio').paused === false");
+                    if (audioPlaying) break;
+                    await page.WaitForTimeoutAsync(5000);
+                }
+
+                if (audioPlaying)
+                {
+                    try
+                    {
+                        await page.WaitForTimeoutAsync(5000);
+                        var audioUrl = await page.EvaluateFunctionAsync<string>("() => document.querySelector('audio').src");
+
+                        if (!string.IsNullOrEmpty(audioUrl))
+                        {
+                            await audioElement.Audio.ClickAsync();
+                            var httpClient = new HttpClient();
+                            var audioBytes = await httpClient.GetByteArrayAsync(audioUrl);
+                            var audioDownloadRequest = new AudioDownloadRequest
+                            {
+                                AudioBytes = audioBytes,
+                                Ayah = ayah,
+                                QuranId = audioElement.QuranId,
+                                Surah = surah
+                            };
+                            await CallDownloadApi(audioDownloadRequest, cancellationToken);
+                        }
+                        else
+                        {
+                            await LogError(ayah, audioElement.QuranId, surah, "Failed to fetch audio url.", cancellationToken);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        await LogError(ayah, audioElement.QuranId, surah, e.Message, cancellationToken);
+                    }
+                }
+                else
+                {
+                    await LogError(ayah, audioElement.QuranId, surah, "Failed to start playing audio.", cancellationToken);
+                }
+            }
+        }
+    }
+    private async Task CallDownloadApi(AudioDownloadRequest request, CancellationToken cancellationToken)
+    {
         var pathToSave = Path.Combine(_env.WebRootPath, "media", request.QuranId.ToString(), request.Surah.ToString());
         if (!Directory.Exists(pathToSave))
         {
@@ -309,19 +210,20 @@ public class AudioScrapingService : IAudioScrapingService
 
         var fileName = $"{request.Ayah}.mp3";
         var filePath = Path.Combine(pathToSave, fileName);
-
+        Log.Information("ayah :" + request.Ayah + " surah :" + request.Surah + " quran: " + request.QuranId);
         if (!System.IO.File.Exists(filePath))
         {
             System.IO.File.WriteAllBytes(filePath, request.AudioBytes);
-            await LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, false);
+            await LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, false, cancellationToken);
         }
         else
         {
-            await LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, true);
-            await LogError(request.Ayah, request.QuranId, request.Surah, $"File already exists: {fileName}");
+            await LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, true, cancellationToken);
+            await LogError(request.Ayah, request.QuranId, request.Surah, $"File already exists: {fileName}", cancellationToken);
         }
     }
-    public async Task LogSuccessfulFiles(int ayahId, int quranId, int surahId, bool isSaved)
+
+    public async Task LogSuccessfulFiles(int ayahId, int quranId, int surahId, bool isSaved, CancellationToken cancellationToken)
     {
         await _context.WebScrapeLogs.AddAsync(new BaharAlqeraat.Domain.Data.Models.WebScrapeLog
         {
@@ -330,11 +232,12 @@ public class AudioScrapingService : IAudioScrapingService
             QuranId = quranId,
             SurahId = surahId,
             IsSavedBefore = isSaved
-        });
+        }, cancellationToken);
         // Log successful files to another table
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
-    public async Task LogError(int ayahId, int quranId, int surahId, string error)
+
+    public async Task LogError(int ayahId, int quranId, int surahId, string error, CancellationToken cancellationToken)
     {
         try
         {
@@ -345,14 +248,14 @@ public class AudioScrapingService : IAudioScrapingService
                 QuranId = quranId,
                 SurahId = surahId,
                 Error = error
-            });
+            }, cancellationToken);
             // Log successful files to another table
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception e)
         {
             Console.WriteLine("error log creation failed ", e.Message);
-            throw e;
+            throw;
         }
     }
 }

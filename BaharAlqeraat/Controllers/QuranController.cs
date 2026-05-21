@@ -94,38 +94,38 @@ namespace BaharAlqeraat.Controllers
             }
         }
         [HttpPost("DownloadAudio")]
-        public async Task<IActionResult> DownloadAudio([FromForm] AudioDownloadRequest request)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                try
-                {
-                    var pathToSave = Path.Combine(_env.WebRootPath, "media", request.QuranId.ToString(), request.Surah.ToString());
-                    if (!Directory.Exists(pathToSave))
-                    {
-                        Directory.CreateDirectory(pathToSave);
-                    }
+        //public async Task<IActionResult> DownloadAudio([FromForm] AudioDownloadRequest request)
+        //{
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        try
+        //        {
+        //            var pathToSave = Path.Combine(_env.WebRootPath, "media", request.QuranId.ToString(), request.Surah.ToString());
+        //            if (!Directory.Exists(pathToSave))
+        //            {
+        //                Directory.CreateDirectory(pathToSave);
+        //            }
 
-                    var fileName = $"{request.Ayah}.mp3";
-                    var filePath = Path.Combine(pathToSave, fileName);
-                    var isSaved = true;
+        //            var fileName = $"{request.Ayah}.mp3";
+        //            var filePath = Path.Combine(pathToSave, fileName);
+        //            var isSaved = true;
 
-                    if (!System.IO.File.Exists(filePath))
-                    {
-                        System.IO.File.WriteAllBytes(filePath, request.AudioBytes);
-                        await _AudioScrapingService.LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, isSaved);
-                        return Ok($"Downloaded and saved: {fileName}");
-                    }
-                    isSaved= false;
-                    await _AudioScrapingService.LogError(request.Ayah, request.QuranId, request.Surah, $"File already exists: {fileName}");
-                    return BadRequest($"File already exists: {fileName}");
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest($"Error downloading or saving file: {ex.Message}");
-                }
-            }
-        }
+        //            if (!System.IO.File.Exists(filePath))
+        //            {
+        //                System.IO.File.WriteAllBytes(filePath, request.AudioBytes);
+        //                await _AudioScrapingService.LogSuccessfulFiles(request.Ayah, request.QuranId, request.Surah, isSaved);
+        //                return Ok($"Downloaded and saved: {fileName}");
+        //            }
+        //            isSaved= false;
+        //            await _AudioScrapingService.LogError(request.Ayah, request.QuranId, request.Surah, $"File already exists: {fileName}");
+        //            return BadRequest($"File already exists: {fileName}");
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            return BadRequest($"Error downloading or saving file: {ex.Message}");
+        //        }
+        //    }
+        //}
     
 
     [HttpGet("{id}")]

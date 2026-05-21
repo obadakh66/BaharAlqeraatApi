@@ -45,7 +45,7 @@ public class AudioScrapingBackgroundService : BackgroundService
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var audioScrapingService = scope.ServiceProvider.GetRequiredService<IAudioScrapingService>();
-                        await audioScrapingService.ScrapeAndDownloadAudioFilesAsync(_backgroundServiceStatus.QuransIds,_backgroundServiceStatus.StartingSurah,_backgroundServiceStatus.StartingAyah);
+                        await audioScrapingService.ScrapeAndDownloadAudioFilesAsync(_backgroundServiceStatus.QuransIds, stoppingToken, _backgroundServiceStatus.StartingSurah, _backgroundServiceStatus.StartingAyah);
                     }
                     // Reset retry delay after successful operation
                     retryDelay = TimeSpan.FromSeconds(7);
