@@ -1,7 +1,6 @@
 ﻿using BaharAlqeraat.Domain;
 using BaharAlqeraat.Domain.Data.Dtos;
 using BaharAlqeraat.Domain.Data.Models;
-using HtmlAgilityPack;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -293,7 +292,7 @@ namespace Bahar.Service
                                     PdfFormXObject pageXObject = inputPage.CopyAsFormXObject(outputDocument);
                                     PdfCanvas outputCanvas = new PdfCanvas(outputPage);
 
-                                    outputCanvas.AddXObject(pageXObject, 0, 0);
+                                    outputCanvas.AddXObjectAt(pageXObject, 0, 0);
 
                                     // Crop the empty edges
                                     outputCanvas.Rectangle(outputPageSize.GetLeft(), outputPageSize.GetBottom(),
@@ -356,7 +355,7 @@ namespace Bahar.Service
                                     PdfCanvas outputCanvas = new PdfCanvas(outputPage);
 
                                     float topCropHeight = inputPageHeight * topCropPercentage;
-                                    outputCanvas.AddXObject(pageXObject, 0, -topCropHeight);
+                                    outputCanvas.AddXObjectAt(pageXObject, 0, -topCropHeight);
 
                                     // Crop the empty edges
                                     outputCanvas.Rectangle(outputPageSize.GetLeft(), outputPageSize.GetBottom(),
@@ -418,7 +417,7 @@ namespace Bahar.Service
                                     PdfFormXObject pageXObject = inputPage.CopyAsFormXObject(outputDocument);
                                     PdfCanvas outputCanvas = new PdfCanvas(outputPage);
 
-                                    outputCanvas.AddXObject(pageXObject, 0, 0);
+                                    outputCanvas.AddXObjectAt(pageXObject, 0, 0);
 
                                     // Crop the empty edges
                                     outputCanvas.Rectangle(outputPageSize.GetLeft(), outputPageSize.GetBottom(),

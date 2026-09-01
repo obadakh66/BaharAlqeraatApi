@@ -126,7 +126,7 @@ public class AudioScrapingService : IAudioScrapingService
 
             using var page = await browser.NewPageAsync();
             await page.GoToAsync(url);
-            await page.WaitForTimeoutAsync(5000);
+            await Task.Delay(5000, cancellationToken);
 
             var audioElements = await page.QuerySelectorAllAsync(".fa-headphones");
             var audioToSaveList = new List<AyaAduiDto>();
@@ -159,14 +159,14 @@ public class AudioScrapingService : IAudioScrapingService
                 {
                     audioPlaying = await page.EvaluateFunctionAsync<bool>("() => document.querySelector('audio').paused === false");
                     if (audioPlaying) break;
-                    await page.WaitForTimeoutAsync(5000);
+                    await Task.Delay(5000, cancellationToken);
                 }
 
                 if (audioPlaying)
                 {
                     try
                     {
-                        await page.WaitForTimeoutAsync(5000);
+                        await Task.Delay(5000, cancellationToken);
                         var audioUrl = await page.EvaluateFunctionAsync<string>("() => document.querySelector('audio').src");
 
                         if (!string.IsNullOrEmpty(audioUrl))
