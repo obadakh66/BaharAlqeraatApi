@@ -1,5 +1,6 @@
 ﻿using Bahar.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,11 @@ namespace BaharAlqeraat.Controllers
             _userService = userService;
         }
 
+        /// <remarks>
+        /// Rate limited: this writes a row for whatever token it is given, so
+        /// without a ceiling the table grows as fast as anyone cares to ask.
+        /// </remarks>
+        [EnableRateLimiting(Startup.RegisterDevicePolicy)]
         [HttpPost("{deviceToken}")]
         public async Task<IActionResult> UpdateToken(string deviceToken)
         {
