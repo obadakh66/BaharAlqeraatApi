@@ -27,7 +27,7 @@ namespace BaharAlqeraat.Controllers
         private readonly AppSettings _appSettings;
 
         public QuranController(ILogger<QuranController> logger, IQuranService QuranService, 
-            IWebHostEnvironment env, IAudioScrapingService AudioScrapingService, IOptions<AppSettings> appSettings)
+            IWebHostEnvironment env, IAudioScrapingService AudioScrapingService, IOptionsSnapshot<AppSettings> appSettings)
         {
             _logger = logger;
             _QuranService = QuranService;
